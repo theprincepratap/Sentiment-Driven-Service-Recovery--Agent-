@@ -20,25 +20,25 @@ DEPARTMENTS = [
 ]
 
 MANAGERS = [
-    {"manager_id": "MGR-001", "name": "Dr. Sarah Mitchell", "department": "Emergency", "email": "s.mitchell@hospital.com", "role": "Duty Manager"},
-    {"manager_id": "MGR-002", "name": "Dr. James  Carter", "department": "Cardiology", "email": "j.carter@hospital.com", "role": "Duty Manager"},
-    {"manager_id": "MGR-003", "name": "Dr. Lisa Nguyen", "department": "Orthopedics", "email": "l.nguyen@hospital.com", "role": "Duty Manager"},
-    {"manager_id": "MGR-004", "name": "Dr. Ahmed Hassan", "department": "Pediatrics", "email": "a.hassan@hospital.com", "role": "Duty Manager"},
-    {"manager_id": "MGR-005", "name": "Dr. Emily Clarke", "department": "Neurology", "email": "e.clarke@hospital.com", "role": "Duty Manager"},
-    {"manager_id": "MGR-006", "name": "Dr. Robert Patel", "department": "General Medicine", "email": "r.patel@hospital.com", "role": "Duty Manager"},
-    {"manager_id": "MGR-007", "name": "Dr. Jennifer Wong", "department": "Oncology", "email": "j.wong@hospital.com", "role": "Duty Manager"},
-    {"manager_id": "MGR-008", "name": "Dr. Michael Torres", "department": "ICU", "email": "m.torres@hospital.com", "role": "Duty Manager"},
+    {"manager_id": "MGR-001", "name": "Dr. Sunita Sharma",    "department": "Emergency",       "email": "s.sharma@hospital.com",   "role": "Duty Manager"},
+    {"manager_id": "MGR-002", "name": "Dr. Jayesh Kapoor",    "department": "Cardiology",      "email": "j.kapoor@hospital.com",   "role": "Duty Manager"},
+    {"manager_id": "MGR-003", "name": "Dr. Leela Nair",       "department": "Orthopedics",     "email": "l.nair@hospital.com",     "role": "Duty Manager"},
+    {"manager_id": "MGR-004", "name": "Dr. Anil Mehta",       "department": "Pediatrics",      "email": "a.mehta@hospital.com",    "role": "Duty Manager"},
+    {"manager_id": "MGR-005", "name": "Dr. Ekta Chaudhary",   "department": "Neurology",       "email": "e.chaudhary@hospital.com","role": "Duty Manager"},
+    {"manager_id": "MGR-006", "name": "Dr. Rajesh Patel",     "department": "General Medicine","email": "r.patel@hospital.com",    "role": "Duty Manager"},
+    {"manager_id": "MGR-007", "name": "Dr. Jyoti Verma",      "department": "Oncology",        "email": "j.verma@hospital.com",    "role": "Duty Manager"},
+    {"manager_id": "MGR-008", "name": "Dr. Mahesh Tiwari",    "department": "ICU",             "email": "m.tiwari@hospital.com",   "role": "Duty Manager"},
 ]
 
 DEPARTMENTS_DOCS = [
-    {"name": "Emergency", "head_name": "Dr. Sarah Mitchell", "head_email": "s.mitchell@hospital.com", "complaint_count": 0},
-    {"name": "Cardiology", "head_name": "Dr. James Carter", "head_email": "j.carter@hospital.com", "complaint_count": 0},
-    {"name": "Orthopedics", "head_name": "Dr. Lisa Nguyen", "head_email": "l.nguyen@hospital.com", "complaint_count": 0},
-    {"name": "Pediatrics", "head_name": "Dr. Ahmed Hassan", "head_email": "a.hassan@hospital.com", "complaint_count": 0},
-    {"name": "Neurology", "head_name": "Dr. Emily Clarke", "head_email": "e.clarke@hospital.com", "complaint_count": 0},
-    {"name": "Oncology", "head_name": "Dr. Jennifer Wong", "head_email": "j.wong@hospital.com", "complaint_count": 0},
-    {"name": "General Medicine", "head_name": "Dr. Robert Patel", "head_email": "r.patel@hospital.com", "complaint_count": 0},
-    {"name": "ICU", "head_name": "Dr. Michael Torres", "head_email": "m.torres@hospital.com", "complaint_count": 0},
+    {"name": "Emergency",       "head_name": "Dr. Sunita Sharma",    "head_email": "s.sharma@hospital.com",    "complaint_count": 0},
+    {"name": "Cardiology",      "head_name": "Dr. Jayesh Kapoor",    "head_email": "j.kapoor@hospital.com",    "complaint_count": 0},
+    {"name": "Orthopedics",     "head_name": "Dr. Leela Nair",       "head_email": "l.nair@hospital.com",      "complaint_count": 0},
+    {"name": "Pediatrics",      "head_name": "Dr. Anil Mehta",       "head_email": "a.mehta@hospital.com",     "complaint_count": 0},
+    {"name": "Neurology",       "head_name": "Dr. Ekta Chaudhary",   "head_email": "e.chaudhary@hospital.com", "complaint_count": 0},
+    {"name": "Oncology",        "head_name": "Dr. Jyoti Verma",      "head_email": "j.verma@hospital.com",     "complaint_count": 0},
+    {"name": "General Medicine","head_name": "Dr. Rajesh Patel",     "head_email": "r.patel@hospital.com",     "complaint_count": 0},
+    {"name": "ICU",             "head_name": "Dr. Mahesh Tiwari",    "head_email": "m.tiwari@hospital.com",    "complaint_count": 0},
 ]
 
 SAMPLE_FEEDBACK = [
@@ -60,9 +60,9 @@ SAMPLE_FEEDBACK = [
 ]
 
 PATIENT_NAMES = [
-    "John Smith", "Maria Garcia", "David Johnson", "Sarah Williams", "Michael Brown",
-    "Jennifer Davis", "Robert Wilson", "Linda Moore", "William Taylor", "Barbara Anderson",
-    "Richard Thomas", "Susan Jackson", "Joseph White", "Jessica Harris", "Charles Martin"
+    "Arjun Sharma",    "Priya Mehta",     "Ravi Patel",     "Sunita Verma",   "Mohammed Khan",
+    "Deepa Nair",      "Vikram Singh",    "Anita Joshi",    "Sanjay Gupta",   "Kavitha Reddy",
+    "Rajesh Iyer",     "Pooja Agarwal",   "Amit Trivedi",   "Neha Malhotra",  "Suresh Pandey",
 ]
 
 
