@@ -1,10 +1,28 @@
 from google import genai
 from google.genai import types
 import json
+import re
 from db.database import get_settings
 
 settings = get_settings()
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
+
+
+def _parse_json_response(text: str) -> dict:
+    """Robustly extract and parse a JSON object from a Gemini response."""
+    text = text.strip()
+    # Strip markdown code fences (```json ... ``` or ``` ... ```)
+    text = re.sub(r"^```(?:json)?\s*", "", text)
+    text = re.sub(r"\s*```$", "", text)
+    text = text.strip()
+    # Extract the outermost { ... } block
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1:
+        text = text[start : end + 1]
+    # Remove trailing commas before } or ] (common Gemini quirk)
+    text = re.sub(r",\s*([}\]])", r"\1", text)
+    return json.loads(text)
 
 async def analyze_feedback(raw_text: str, patient_name: str, department: str) -> dict:
     prompt = f"""
@@ -41,9 +59,8 @@ resolutionMessage rules:
         model="gemini-3-flash-preview",
         contents=prompt
     )
-    text = response.text.strip() # type: ignore
-    text = text.replace("```json", "").replace("```", "").strip()
-    return json.loads(text)
+    text = response.text.strip()  # type: ignore
+    return _parse_json_response(text)
 
 
 async def generate_weekly_summary(feedback_list: list) -> dict:
@@ -66,6 +83,5 @@ Return exactly:
         model="gemini-3-flash-preview",
         contents=prompt
     )
-    text = response.text.strip() # type: ignore
-    text = text.replace("```json", "").replace("```", "").strip()
-    return json.loads(text)
+    text = response.text.strip()  # type: ignore
+    return _parse_json_response(text)

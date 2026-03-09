@@ -48,8 +48,7 @@ async def send_resolution_message(patient_id: str, contact_name: str, message: s
             "resolutionMessageSent": True,
             "resolutionSentAt": datetime.utcnow(),
             "resolutionContact": contact_name
-        }},
-        sort=[("createdAt", -1)] # type: ignore
+        }}
     )
     return {"sent": True, "patientId": patient_id, "contact": contact_name}
 
@@ -67,7 +66,6 @@ async def send_review_nudge(patient_id: str, patient_name: str) -> dict:
     db = get_db()
     await db.feedbacks.update_one(
         {"patientId": patient_id},
-        {"$set": {"reviewNudgeSent": True}},
-        sort=[("createdAt", -1)] # type: ignore
+        {"$set": {"reviewNudgeSent": True}}
     )
     return {"sent": True, "patientId": patient_id, "reviewLink": review_link}
