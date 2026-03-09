@@ -31,10 +31,33 @@ Rules:
 """
 
 
+CANDIDATE_MODELS = [
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+    "gemini-1.5-flash-latest",
+    "gemini-1.5-flash-002",
+    "gemini-1.5-pro-latest",
+]
+
+
+def _get_model():
+    """Return the first available Gemini model."""
+    for m in CANDIDATE_MODELS:
+        try:
+            model = genai.GenerativeModel(m)
+            model.generate_content("ping")
+            return model
+        except Exception:
+            continue
+    return None
+
+
 async def analyze_feedback(feedback_text: str) -> GeminiAnalysis:
     """Send feedback to Gemini and parse the structured response."""
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = _get_model()
+        if model is None:
+            raise Exception("No available Gemini model")
         prompt = PROMPT_TEMPLATE.format(feedback=feedback_text.replace('"', "'"))
         response = model.generate_content(prompt)
         raw = response.text.strip()

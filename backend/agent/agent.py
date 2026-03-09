@@ -205,12 +205,34 @@ async def run_agent(use_gemini: bool = True) -> dict:
 
     if use_gemini and os.getenv("GOOGLE_API_KEY") and os.getenv("GOOGLE_API_KEY") != "your_google_gemini_api_key_here":
         # ── GEMINI FUNCTION-CALLING AGENT LOOP ────────────────────────────────
+        CANDIDATE_MODELS = [
+            "gemini-2.0-flash",
+            "gemini-2.0-flash-lite",
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-flash-002",
+            "gemini-1.5-pro-latest",
+        ]
         try:
-            model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash",
-                tools=[{"function_declarations": TOOL_DECLARATIONS}],
-                system_instruction=SYSTEM_PROMPT
-            )
+            # Auto-detect working model
+            model = None
+            used_model = None
+            for m in CANDIDATE_MODELS:
+                try:
+                    model = genai.GenerativeModel(
+                        model_name=m,
+                        tools=[{"function_declarations": TOOL_DECLARATIONS}],
+                        system_instruction=SYSTEM_PROMPT
+                    )
+                    # Quick test call to verify model is accessible
+                    test = model.generate_content("ping")
+                    used_model = m
+                    add_step("model_selected", {"message": f"Using Gemini model: {m}"})
+                    break
+                except Exception:
+                    continue
+
+            if model is None:
+                raise Exception("No available Gemini model found. Falling back to simulation.")
 
             chat = model.start_chat()
             response = chat.send_message("Start the service recovery workflow for today's discharged patients.")
