@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from db.mongodb import connect_to_mongo, close_mongo_connection
 from services.ws_manager import manager as ws_manager
-from routes import feedback, tickets, patients, dashboard, reports, departments, managers
+from routes import feedback, tickets, patients, dashboard, reports, departments, managers, whatsapp
 from routes import agent as agent_route
 import json
 
@@ -40,6 +40,7 @@ app.include_router(reports.router, prefix="/api", tags=["Reports"])
 app.include_router(departments.router, prefix="/api", tags=["Departments"])
 app.include_router(managers.router, prefix="/api", tags=["Managers"])
 app.include_router(agent_route.router, prefix="/api", tags=["Agent"])
+app.include_router(whatsapp.router, prefix="/api", tags=["WhatsApp"])
 
 
 @app.get("/")

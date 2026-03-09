@@ -61,31 +61,43 @@ class GeminiAnalysis(BaseModel):
 
 
 class Feedback(BaseModel):
-    patient_id: str
-    department: str
-    text: str
+    patient_id: Optional[str] = None
+    department: Optional[str] = None
+    text: Optional[str] = None
+    feedback_text: Optional[str] = None  # Alternative field for WhatsApp/other sources
     name: Optional[str] = "Anonymous"
+    patient_phone: Optional[str] = None  # For WhatsApp feedback
+    source: str = "web"  # web, whatsapp, ivr, etc.
     analysis: Optional[GeminiAnalysis] = None
+    sentiment: Optional[str] = None  # Store sentiment directly for faster access
+    emotion: Optional[str] = None
+    category: Optional[str] = None
+    severity: Optional[int] = None
+    resolution_message: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 # --- Ticket ---
 class Ticket(BaseModel):
     ticket_id: Optional[str] = None
-    patient_id: str
+    patient_id: Optional[str] = None
+    patient_phone: Optional[str] = None  # For WhatsApp tickets
     patient_name: Optional[str] = "Anonymous"
-    department: str
+    department: Optional[str] = None
+    feedback_id: Optional[str] = None  # Reference to feedback record
     category: str
     severity: int
-    sentiment: str
-    emotion: str
-    original_feedback: str
-    resolution_message: str
+    sentiment: Optional[str] = None
+    emotion: Optional[str] = None
+    original_feedback: Optional[str] = None
+    description: Optional[str] = None  # Alternative field for WhatsApp/other sources
+    resolution_message: Optional[str] = None
     status: TicketStatus = TicketStatus.open
     assigned_manager: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     resolved_at: Optional[datetime] = None
     escalated: bool = False
+    source: str = "web"  # web, whatsapp, app, etc.
 
 
 class TicketResolve(BaseModel):
