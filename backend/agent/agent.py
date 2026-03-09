@@ -206,11 +206,11 @@ async def run_agent(use_gemini: bool = True) -> dict:
     if use_gemini and os.getenv("GOOGLE_API_KEY") and os.getenv("GOOGLE_API_KEY") != "your_google_gemini_api_key_here":
         # ── GEMINI FUNCTION-CALLING AGENT LOOP ────────────────────────────────
         CANDIDATE_MODELS = [
+            "gemini-1.5-flash-002",
+            "gemini-1.5-flash-latest",
             "gemini-2.0-flash",
             "gemini-2.0-flash-lite",
-            "gemini-1.5-flash-latest",
-            "gemini-1.5-flash-002",
-            "gemini-1.5-pro-latest",
+            "gemini-2.0-flash-exp",
         ]
         try:
             # Auto-detect working model
@@ -223,12 +223,12 @@ async def run_agent(use_gemini: bool = True) -> dict:
                         tools=[{"function_declarations": TOOL_DECLARATIONS}],
                         system_instruction=SYSTEM_PROMPT
                     )
-                    # Quick test call to verify model is accessible
-                    test = model.generate_content("ping")
+                    # Don't test model - just try to use it
                     used_model = m
                     add_step("model_selected", {"message": f"Using Gemini model: {m}"})
                     break
-                except Exception:
+                except Exception as e:
+                    print(f"⚠️ Model {m} unavailable: {e}")
                     continue
 
             if model is None:

@@ -32,11 +32,11 @@ Rules:
 
 
 CANDIDATE_MODELS = [
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
-    "gemini-1.5-flash-latest",
-    "gemini-1.5-flash-002",
-    "gemini-1.5-pro-latest",
+   "gemini-1.5-flash-002",
+   "gemini-1.5-flash-latest",
+   "gemini-2.0-flash",
+   "gemini-2.0-flash-lite",
+   "gemini-2.0-flash-exp",
 ]
 
 
@@ -45,10 +45,12 @@ def _get_model():
     for m in CANDIDATE_MODELS:
         try:
             model = genai.GenerativeModel(m)
-            model.generate_content("ping")
+            # Just try to instantiate - don't actually test with a call
             return model
-        except Exception:
+        except Exception as e:
+            print(f"⚠️ Model {m} unavailable: {e}")
             continue
+    print("⚠️ No Gemini models available - falling back to simulation")
     return None
 
 
