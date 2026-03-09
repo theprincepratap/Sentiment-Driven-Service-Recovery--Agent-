@@ -202,7 +202,7 @@ export default function DashboardPage() {
                   </span>
                   {' '}
                   <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                    {(e.data as any)?.message || (e.data as any)?.preview || JSON.stringify(e.data).slice(0, 80)}
+                    {(e.data as any)?.message || (e.data as any)?.preview || JSON.stringify(e.data)?.slice(0, 80) || ''}
                   </span>
                 </div>
                 <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-muted)' }}>

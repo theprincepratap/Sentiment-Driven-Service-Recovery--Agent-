@@ -11,12 +11,14 @@ import {
   Bell,
   Activity,
   Heart,
+  Bot,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWebSocketContext } from '@/components/WSProvider';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/agent', icon: Bot, label: 'AI Agent' },
   { href: '/feedback', icon: MessageSquare, label: 'Feedback Monitor' },
   { href: '/tickets', icon: Ticket, label: 'Complaint Tickets' },
   { href: '/heatmap', icon: Map, label: 'Department Heatmap' },
