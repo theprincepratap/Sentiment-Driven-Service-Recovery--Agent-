@@ -32,11 +32,13 @@ Rules:
 
 
 CANDIDATE_MODELS = [
-   "gemini-1.5-flash-002",
-   "gemini-1.5-flash-latest",
+   "gemini-3.1-flash-lite-preview",
+   "gemini-3.1-flash-preview",
+   "gemini-3.1-pro-preview",
+   "gemini-3-flash-preview",
+   "gemini-3-pro-preview",
+   "gemini-2.5-flash",
    "gemini-2.0-flash",
-   "gemini-2.0-flash-lite",
-   "gemini-2.0-flash-exp",
 ]
 
 

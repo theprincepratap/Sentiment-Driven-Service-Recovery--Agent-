@@ -93,8 +93,9 @@ async def seed():
         patient_id = f"PAT-{1000 + i}"
         patient_name = PATIENT_NAMES[i % len(PATIENT_NAMES)]
         department = DEPARTMENTS[i % len(DEPARTMENTS)]
-        days_ago = random.randint(0, 7)
-        created_at = datetime.utcnow() - timedelta(days=days_ago, hours=random.randint(0, 23))
+        # Use recent timestamps (last 30 minutes instead of days)
+        mins_ago = random.randint(1, 30)
+        created_at = datetime.utcnow() - timedelta(minutes=mins_ago)
 
         # Patient
         await db.patients.update_one(

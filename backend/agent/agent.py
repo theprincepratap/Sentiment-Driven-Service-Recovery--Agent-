@@ -206,11 +206,13 @@ async def run_agent(use_gemini: bool = True) -> dict:
     if use_gemini and os.getenv("GOOGLE_API_KEY") and os.getenv("GOOGLE_API_KEY") != "your_google_gemini_api_key_here":
         # ── GEMINI FUNCTION-CALLING AGENT LOOP ────────────────────────────────
         CANDIDATE_MODELS = [
-            "gemini-1.5-flash-002",
-            "gemini-1.5-flash-latest",
+            "gemini-3.1-flash-lite-preview",
+            "gemini-3.1-flash-preview",
+            "gemini-3.1-pro-preview",
+            "gemini-3-flash-preview",
+            "gemini-3-pro-preview",
+            "gemini-2.5-flash",
             "gemini-2.0-flash",
-            "gemini-2.0-flash-lite",
-            "gemini-2.0-flash-exp",
         ]
         try:
             # Auto-detect working model
