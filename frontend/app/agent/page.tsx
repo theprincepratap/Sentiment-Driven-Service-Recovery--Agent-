@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Bot, Play, CheckCircle, AlertTriangle, ArrowRight, Zap, MessageSquare, Ticket, Bell, Star, ChevronDown, ChevronRight, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bot, Play, CheckCircle, AlertTriangle, ArrowRight, Zap, MessageSquare, Ticket, Bell, Star, ChevronDown, ChevronRight, RefreshCw, Sparkles, TrendingUp } from 'lucide-react';
 import { getSeverityColor, formatCategory, timeAgo } from '@/lib/utils';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
@@ -120,18 +120,43 @@ export default function AgentPage() {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [backendOnline, setBackendOnline] = useState(true);
+
+  // Check backend status on mount
+  useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/health`, { method: 'GET' });
+        setBackendOnline(res.ok);
+      } catch (e) {
+        setBackendOnline(false);
+      }
+    };
+    checkBackend();
+    const interval = setInterval(checkBackend, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const runAgent = async () => {
+    if (!backendOnline) {
+      setError('Backend is offline. Make sure http://localhost:8000 is running.');
+      return;
+    }
+    
     setRunning(true);
     setError(null);
     setResult(null);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/agent/run`, { method: 'POST' });
+      const res = await fetch(`${BACKEND_URL}/api/agent/run`, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setResult(data);
     } catch (e: any) {
-      setError(e.message || 'Failed to run agent');
+      setError(e.message || 'Failed to run agent. Check backend connection.');
+      setBackendOnline(false);
     } finally {
       setRunning(false);
     }
@@ -147,44 +172,75 @@ export default function AgentPage() {
           <div className="flex items-center gap-2 mb-1">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center"
               style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' }}>
-              <Bot size={16} className="text-white" />
+              <Sparkles size={16} className="text-white" />
             </div>
             <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
               Service Recovery Agent
             </h1>
+            <span className="text-xs px-2 py-1 rounded-lg font-mono"
+              style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)' }}>
+              Gemini 3.1 AI
+            </span>
           </div>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            Gemini AI function-calling agent — autonomous closed-loop patient feedback workflow
-          </p>
+          <div className="flex items-center gap-2 mt-2">
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              Autonomous closed-loop patient feedback workflow
+            </p>
+            <span className={`text-xs px-2 py-1 rounded-lg flex items-center gap-1 ${backendOnline ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>
+              <span className={`w-2 h-2 rounded-full ${backendOnline ? 'bg-green-500' : 'bg-red-500'}`}></span>
+              {backendOnline ? 'Backend Online' : 'Backend Offline'}
+            </span>
+          </div>
         </div>
         <button
           onClick={runAgent}
-          disabled={running}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-60"
+          disabled={running || !backendOnline}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-60 hover:shadow-lg"
           style={{
-            background: running ? 'rgba(59,130,246,0.2)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+            background: running || !backendOnline ? 'rgba(59,130,246,0.2)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
             color: 'white',
             border: 'none',
-            cursor: running ? 'not-allowed' : 'pointer',
+            cursor: running || !backendOnline ? 'not-allowed' : 'pointer',
           }}
         >
-          {running ? <RefreshCw size={15} className="animate-spin" /> : <Play size={15} />}
-          {running ? 'Agent Running...' : 'Run Agent'}
+          {running ? (
+            <>
+              <RefreshCw size={15} className="animate-spin" />
+              Agent Running...
+            </>
+          ) : backendOnline ? (
+            <>
+              <Play size={15} />
+              Run Agent
+            </>
+          ) : (
+            <>
+              <AlertTriangle size={15} />
+              Offline
+            </>
+          )}
         </button>
       </div>
 
       {/* Workflow diagram */}
       {!result && !running && (
         <div className="glass-card p-6">
-          <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-secondary)' }}>
-            Workflow — 7 Tools, Closed Loop
-          </h3>
-          <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+              <Zap size={16} style={{ color: '#8b5cf6' }} />
+              Workflow — 7 Tools, Closed Loop
+            </h3>
+            <div className="text-xs px-2 py-1 rounded-lg"
+              style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)' }}>
+              ✨ Powered by Gemini 3.1 Flash
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs mb-4">
             {[
-              { label: 'get_discharged_patients', color: '#3b82f6' },
-              { label: '→ send_survey', color: '#8b5cf6' },
-              { label: '→ get_survey_response', color: '#06b6d4' },
-              { label: '→ analyze_sentiment', color: '#f59e0b' },
+              { label: '1. get_discharged_patients', color: '#3b82f6' },
+              { label: '2. send_survey', color: '#8b5cf6' },
+              { label: '3. get_survey_response', color: '#06b6d4' },
+              { label: '4. analyze_sentiment', color: '#f59e0b' },
             ].map(s => (
               <span key={s.label} className="px-2 py-1 rounded-lg font-mono"
                 style={{ background: `${s.color}18`, color: s.color, border: `1px solid ${s.color}30` }}>
@@ -192,13 +248,13 @@ export default function AgentPage() {
               </span>
             ))}
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="p-3 rounded-xl" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)' }}>
               <p className="text-xs font-semibold mb-2" style={{ color: '#ef4444' }}>🔴 Negative Sentiment</p>
               <div className="space-y-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-                <p>→ create_crm_ticket (category + severity)</p>
-                <p>→ notify_duty_manager (15-min SLA)</p>
-                <p>→ send_resolution_message (personalized)</p>
+                <p>→ 5. create_crm_ticket (category + severity)</p>
+                <p>→ 6. notify_duty_manager (15-min SLA)</p>
+                <p>→ 7. send_resolution_message (personalized)</p>
                 <p>⬆️ auto-escalate if 3+ same dept/week</p>
               </div>
             </div>
@@ -243,12 +299,20 @@ export default function AgentPage() {
       {/* Error */}
       {error && (
         <div className="glass-card p-5 flex items-start gap-3"
-          style={{ borderColor: 'rgba(239,68,68,0.3)' }}>
-          <AlertTriangle size={18} style={{ color: '#ef4444', flexShrink: 0 }} />
-          <div>
+          style={{ borderColor: 'rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.05)' }}>
+          <AlertTriangle size={18} style={{ color: '#ef4444', flexShrink: 0, marginTop: '2px' }} />
+          <div className="flex-1">
             <p className="font-semibold text-sm" style={{ color: '#ef4444' }}>Agent Error</p>
             <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{error}</p>
-            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Make sure the backend is running at http://localhost:8000</p>
+            <div className="mt-3 text-xs space-y-1" style={{ color: 'var(--text-muted)' }}>
+              <p className="font-semibold">Quick Fix:</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                <li>Ensure backend is running: <code className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(0,0,0,0.2)', fontFamily: 'monospace' }}>cd backend && uvicorn main:app --reload</code></li>
+                <li>Check MongoDB is running on port 27017</li>
+                <li>Verify Gemini API key in `.env`: <code className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(0,0,0,0.2)', fontFamily: 'monospace' }}>GOOGLE_API_KEY</code></li>
+                <li>Frontend should reach backend at: <code className="px-1.5 py-0.5 rounded text-xs" style={{ background: 'rgba(0,0,0,0.2)', fontFamily: 'monospace' }}>http://localhost:8000</code></li>
+              </ul>
+            </div>
           </div>
         </div>
       )}
