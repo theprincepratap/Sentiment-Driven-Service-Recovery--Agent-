@@ -1,143 +1,66 @@
-'use client';
+"use client";
+import { useEffect, useState } from "react";
+import TopBar from "@/components/TopBar";
+import { getHeatmap } from "@/lib/api";
 
-import { useEffect, useState, useCallback } from 'react';
-import { api } from '@/lib/api';
-import { getSeverityColor } from '@/lib/utils';
-import { RefreshCw, AlertTriangle, TrendingUp } from 'lucide-react';
-
-function getRiskColor(risk: number): string {
-  if (risk === 0) return '#1a2235';
-  if (risk < 20) return '#10b981';
-  if (risk < 40) return '#f59e0b';
-  if (risk < 60) return '#ef4444';
-  return '#8b5cf6';
-}
-
-function getRiskLabel(risk: number): string {
-  if (risk === 0) return 'None';
-  if (risk < 20) return 'Low';
-  if (risk < 40) return 'Medium';
-  if (risk < 60) return 'High';
-  return 'Critical';
-}
+const riskConfig: any = {
+  None: { bg: "bg-gray-800", border: "border-gray-700", text: "text-gray-400", dot: "bg-gray-500" },
+  Low: { bg: "bg-green-900/30", border: "border-green-700", text: "text-green-300", dot: "bg-green-500" },
+  Medium: { bg: "bg-yellow-900/30", border: "border-yellow-700", text: "text-yellow-300", dot: "bg-yellow-500" },
+  High: { bg: "bg-orange-900/30", border: "border-orange-700", text: "text-orange-300", dot: "bg-orange-500" },
+  Critical: { bg: "bg-red-900/40", border: "border-red-600", text: "text-red-300", dot: "bg-red-500" },
+};
 
 export default function HeatmapPage() {
-  const [heatmap, setHeatmap] = useState<any[]>([]);
+  const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadData = useCallback(async () => {
-    try {
-      const data = await api.getDepartmentHeatmap();
-      setHeatmap(data);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
+  useEffect(() => {
+    getHeatmap().then(setData).catch(console.error).finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
-
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Department Heatmap</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            Complaint risk intensity by department — darker means higher risk
-          </p>
-        </div>
-        <button onClick={loadData} className="p-2 rounded-lg hover:bg-white/5">
-          <RefreshCw size={16} style={{ color: 'var(--text-muted)' }} />
-        </button>
+    <div>
+      <TopBar title="Department Heatmap" subtitle="Complaint risk intensity by department — darker means higher risk" />
+      <div className="flex gap-4 mb-6 flex-wrap">
+        {Object.entries(riskConfig).map(([level, cfg]: any) => (
+          <div key={level} className="flex items-center gap-2">
+            <div className={`w-3 h-3 rounded-full ${cfg.dot}`} />
+            <span className="text-gray-400 text-xs">{level}</span>
+          </div>
+        ))}
       </div>
-
-      {/* Legend */}
-      <div className="flex items-center gap-4">
-        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Risk Level:</span>
-        {['None', 'Low', 'Medium', 'High', 'Critical'].map((label, i) => {
-          const colors = ['#1a2235', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
-          return (
-            <div key={label} className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded" style={{ background: colors[i] }} />
-              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Heatmap Grid */}
-      {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-40 rounded-xl animate-pulse"
-              style={{ background: 'rgba(17,24,39,0.5)' }} />
-          ))}
+      {loading ? <p className="text-gray-500">Loading...</p> : data.length === 0 ? (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center">
+          <p className="text-gray-400">No department data yet. Submit feedback first.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {heatmap.map((dept) => {
-            const riskColor = getRiskColor(dept.risk_score);
-            const riskLabel = getRiskLabel(dept.risk_score);
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {data.map((d) => {
+            const cfg = riskConfig[d.riskLevel] || riskConfig.None;
             return (
-              <div key={dept.department}
-                className="rounded-xl p-5 transition-all duration-300 cursor-pointer hover:scale-105"
-                style={{
-                  background: `linear-gradient(135deg, ${riskColor}22, ${riskColor}11)`,
-                  border: `1px solid ${riskColor}44`,
-                }}>
-                <div className="mb-3">
-                  <div className="w-2.5 h-2.5 rounded-full mb-2" style={{ background: riskColor }} />
-                  <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
-                    {dept.department}
-                  </h3>
-                  <span className="text-xs px-2 py-0.5 rounded-full"
-                    style={{ background: `${riskColor}22`, color: riskColor, border: `1px solid ${riskColor}44` }}>
-                    {riskLabel} Risk
-                  </span>
+              <div key={d.department} className={`${cfg.bg} border ${cfg.border} rounded-xl p-6`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-semibold">{d.department}</h3>
+                  <span className={`text-xs px-2 py-1 rounded-full border ${cfg.border} ${cfg.text} font-medium`}>{d.riskLevel}</span>
                 </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs">
-                    <span style={{ color: 'var(--text-muted)' }}>Total Feedback</span>
-                    <span style={{ color: 'var(--text-primary)' }}>{dept.total_feedback}</span>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-white">{d.totalFeedback}</p>
+                    <p className="text-gray-400 text-xs">Total</p>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span style={{ color: 'var(--text-muted)' }}>Complaints</span>
-                    <span style={{ color: '#ef4444' }}>{dept.negative_count}</span>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-red-400">{d.negativeCount}</p>
+                    <p className="text-gray-400 text-xs">Negative</p>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span style={{ color: 'var(--text-muted)' }}>Avg Severity</span>
-                    <span style={{ color: getSeverityColor(Math.round(dept.avg_severity)) }}>
-                      {dept.avg_severity}/5
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span style={{ color: 'var(--text-muted)' }}>Top Issue</span>
-                    <span style={{ color: 'var(--text-secondary)' }}>
-                      {dept.top_category?.replace(/_/g, ' ')}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Risk bar */}
-                <div className="mt-3">
-                  <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                    <div className="h-1.5 rounded-full transition-all duration-700"
-                      style={{ width: `${Math.min(dept.risk_score, 100)}%`, background: riskColor }} />
-                  </div>
-                  <div className="flex justify-between mt-1">
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Risk</span>
-                    <span className="text-xs font-semibold" style={{ color: riskColor }}>
-                      {dept.risk_score}%
-                    </span>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-white">{d.avgSeverity}</p>
+                    <p className="text-gray-400 text-xs">Avg Sev</p>
                   </div>
                 </div>
               </div>
             );
           })}
-          {heatmap.length === 0 && (
-            <div className="col-span-4 text-center py-16 text-sm" style={{ color: 'var(--text-muted)' }}>
-              No department data yet. Submit feedback first.
-            </div>
-          )}
         </div>
       )}
     </div>

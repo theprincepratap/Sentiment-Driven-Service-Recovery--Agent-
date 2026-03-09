@@ -1,141 +1,110 @@
-'use client';
-
-import { useEffect, useState, useCallback } from 'react';
-import { api } from '@/lib/api';
-import { formatCategory, timeAgo } from '@/lib/utils';
-import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, Legend,
-  ResponsiveContainer, CartesianGrid
-} from 'recharts';
-import { RefreshCw, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
+"use client";
+import { useEffect, useState } from "react";
+import TopBar from "@/components/TopBar";
+import { getWeeklyReport } from "@/lib/api";
 
 export default function AnalyticsPage() {
   const [report, setReport] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const loadReport = useCallback(async () => {
+  const load = async () => {
+    setLoading(true);
+    setError("");
     try {
-      const data = await api.getWeeklyReport();
+      const data = await getWeeklyReport();
       setReport(data);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  }, []);
-
-  useEffect(() => { loadReport(); }, [loadReport]);
-
-  const tooltipStyle = {
-    contentStyle: { background: '#111827', border: '1px solid #1e2d45', borderRadius: 8, fontSize: 12 },
-    labelStyle: { color: '#f0f4ff' }
+    } catch {
+      setError("Failed to generate report. Make sure backend is running.");
+    }
+    setLoading(false);
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Analytics Report</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-            Weekly trends, patterns, and performance insights
-          </p>
+    <div>
+      <TopBar title="Analytics Report" subtitle="Weekly trends, patterns, and performance insights" />
+      {!report && !loading && (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center">
+          <p className="text-4xl mb-3">📈</p>
+          <p className="text-gray-300 font-medium mb-2">Generate Weekly Report</p>
+          <p className="text-gray-500 text-sm mb-6">Gemini will analyze all feedback from the past 7 days</p>
+          <button onClick={load} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-all">
+            Generate Report
+          </button>
+          {error && <p className="text-red-400 text-sm mt-3">{error}</p>}
         </div>
-        <button onClick={loadReport} className="p-2 rounded-lg hover:bg-white/5">
-          <RefreshCw size={16} style={{ color: 'var(--text-muted)' }} />
-        </button>
-      </div>
-
-      {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="glass-card h-28 animate-pulse" />
-          ))}
+      )}
+      {loading && (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center">
+          <div className="text-5xl mb-4">🤖</div>
+          <p className="text-white font-medium">Gemini analyzing weekly data...</p>
+          <div className="mt-4 flex justify-center">
+            <div className="w-6 h-6 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+          </div>
         </div>
-      ) : report ? (
-        <>
-          {/* Summary Cards */}
+      )}
+      {report && !loading && (
+        <div className="space-y-6">
+          {/* Stats Row */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Total Feedback (7d)', value: report.summary.total_feedback, color: '#3b82f6' },
-              { label: 'Negative Complaints', value: report.summary.negative, color: '#ef4444' },
-              { label: 'Avg Severity', value: report.summary.avg_severity, color: '#f59e0b' },
-              { label: 'Escalations', value: report.summary.escalations, color: '#8b5cf6' },
-            ].map(({ label, value, color }) => (
-              <div key={label} className="glass-card p-5">
-                <div className="text-2xl font-bold mb-1" style={{ color }}>{value}</div>
-                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{label}</div>
+              { label: "Total Feedback", value: report.totalFeedback },
+              { label: "Avg Severity", value: report.avgSeverity },
+              { label: "Resolution Rate", value: `${Math.round((report.resolutionRate || 0) * 100)}%` },
+              { label: "SLA Breaches", value: report.slaBreachCount },
+            ].map((s) => (
+              <div key={s.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5 text-center">
+                <p className="text-3xl font-bold text-white mb-1">{s.value}</p>
+                <p className="text-gray-400 text-sm">{s.label}</p>
               </div>
             ))}
           </div>
 
-          {/* Daily Trend */}
-          <div className="glass-card p-5">
-            <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-secondary)' }}>
-              7-Day Feedback Trend
-            </h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={report.daily_trend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e2d45" />
-                <XAxis dataKey="date" tick={{ fill: '#4a6080', fontSize: 11 }} />
-                <YAxis tick={{ fill: '#4a6080', fontSize: 11 }} />
-                <Tooltip {...tooltipStyle} />
-                <Legend wrapperStyle={{ fontSize: 12, color: '#8da0b8' }} />
-                <Line type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4, fill: '#3b82f6' }} name="Total" />
-                <Line type="monotone" dataKey="negative" stroke="#ef4444" strokeWidth={2} dot={{ r: 4, fill: '#ef4444' }} name="Negative" />
-                <Line type="monotone" dataKey="positive" stroke="#10b981" strokeWidth={2} dot={{ r: 4, fill: '#10b981' }} name="Positive" />
-              </LineChart>
-            </ResponsiveContainer>
+          {/* Sentiment Breakdown */}
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+            <h3 className="text-white font-semibold mb-4">Sentiment Breakdown</h3>
+            <div className="flex gap-6">
+              {Object.entries(report.sentimentBreakdown || {}).map(([k, v]: any) => {
+                const colors: any = { positive: "text-green-400", negative: "text-red-400", neutral: "text-yellow-400" };
+                return (
+                  <div key={k} className="text-center">
+                    <p className={`text-3xl font-bold ${colors[k]}`}>{v}</p>
+                    <p className="text-gray-400 text-sm capitalize">{k}</p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Department Breakdown + Top Categories */}
+          {/* Top Complaints + AI Insight */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="glass-card p-5">
-              <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-secondary)' }}>
-                Department Breakdown
-              </h3>
-              {report.department_breakdown.length === 0 ? (
-                <p className="text-sm text-center py-8" style={{ color: 'var(--text-muted)' }}>No data yet</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={report.department_breakdown.slice(0, 8)} margin={{ left: -20 }}>
-                    <XAxis dataKey="department" tick={{ fill: '#4a6080', fontSize: 10 }} />
-                    <YAxis tick={{ fill: '#4a6080', fontSize: 10 }} />
-                    <Tooltip {...tooltipStyle} />
-                    <Bar dataKey="total" fill="#3b82f622" stroke="#3b82f6" radius={[3, 3, 0, 0]} name="Total" />
-                    <Bar dataKey="negative" fill="#ef444422" stroke="#ef4444" radius={[3, 3, 0, 0]} name="Negative" />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <h3 className="text-white font-semibold mb-4">Top Complaint Categories</h3>
+              <div className="space-y-2">
+                {report.topComplaintCategories?.map((c: any) => (
+                  <div key={c.category} className="flex justify-between items-center bg-gray-800 rounded-lg px-4 py-3">
+                    <span className="text-gray-200 text-sm">{c.category}</span>
+                    <span className="text-white font-bold text-sm">{c.count}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-
-            <div className="glass-card p-5">
-              <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-secondary)' }}>
-                Top Complaint Categories (7d)
-              </h3>
-              {report.top_categories.length === 0 ? (
-                <p className="text-sm text-center py-8" style={{ color: 'var(--text-muted)' }}>No data yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {report.top_categories.map((c: any, i: number) => (
-                    <div key={i}>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span style={{ color: 'var(--text-secondary)' }}>{formatCategory(c.category)}</span>
-                        <span style={{ color: 'var(--text-primary)' }}>{c.count}</span>
-                      </div>
-                      <div className="h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                        <div className="h-1.5 rounded-full"
-                          style={{
-                            width: `${Math.min((c.count / report.top_categories[0].count) * 100, 100)}%`,
-                            background: `linear-gradient(90deg, #3b82f6, #8b5cf6)`
-                          }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <h3 className="text-white font-semibold mb-4">🤖 AI Insight</h3>
+              <p className="text-gray-300 text-sm leading-relaxed mb-4">{report.overallInsight}</p>
+              <h4 className="text-gray-400 text-xs uppercase tracking-wide mb-2">Recommended Actions</h4>
+              <ul className="space-y-2">
+                {report.recommendedActions?.map((a: string, i: number) => (
+                  <li key={i} className="text-sm text-gray-300 flex gap-2">
+                    <span className="text-indigo-400">→</span> {a}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
-        </>
-      ) : (
-        <div className="glass-card p-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-          Failed to load analytics. Make sure the backend is running.
+          <button onClick={load} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-lg transition-all">
+            🔄 Regenerate Report
+          </button>
         </div>
       )}
     </div>

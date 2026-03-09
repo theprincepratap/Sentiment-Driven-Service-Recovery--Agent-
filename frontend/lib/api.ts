@@ -1,57 +1,61 @@
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+const API = process.env.NEXT_PUBLIC_API_URL;
 
-async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${BACKEND_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err || `API error: ${res.status}`);
-  }
+export const apiGet = async (path: string) => {
+  const res = await fetch(`${API}${path}`);
+  if (!res.ok) throw new Error(`GET ${path} failed`);
   return res.json();
-}
-
-export const api = {
-  // Dashboard
-  getDashboardStats: () => apiFetch('/api/dashboard/stats'),
-
-  // Feedback
-  submitFeedback: (data: { patient_id: string; department: string; text: string; name?: string }) =>
-    apiFetch('/api/feedback', { method: 'POST', body: JSON.stringify(data) }),
-  getFeedback: (limit = 50, department?: string) =>
-    apiFetch(`/api/feedback?limit=${limit}${department ? `&department=${department}` : ''}`),
-
-  // Tickets
-  getTickets: (params?: { status?: string; department?: string; limit?: number }) => {
-    const q = new URLSearchParams();
-    if (params?.status) q.set('status', params.status);
-    if (params?.department) q.set('department', params.department);
-    if (params?.limit) q.set('limit', String(params.limit));
-    return apiFetch(`/api/tickets?${q}`);
-  },
-  resolveTicket: (ticketId: string, notes?: string) =>
-    apiFetch(`/api/tickets/${ticketId}/resolve`, {
-      method: 'PATCH',
-      body: JSON.stringify({ resolution_notes: notes }),
-    }),
-  updateTicketStatus: (ticketId: string, status: string) =>
-    apiFetch(`/api/tickets/${ticketId}/status?status=${status}`, { method: 'PATCH' }),
-
-  // Departments / Heatmap
-  getDepartmentHeatmap: () => apiFetch('/api/departments/heatmap'),
-  getDepartments: () => apiFetch('/api/departments'),
-
-  // Notifications
-  getNotifications: (unreadOnly = false) =>
-    apiFetch(`/api/managers/notifications?unread_only=${unreadOnly}`),
-  markNotificationRead: (id: string) =>
-    apiFetch(`/api/managers/notifications/${id}/read`, { method: 'PATCH' }),
-
-  // Reports
-  getWeeklyReport: () => apiFetch('/api/reports/weekly'),
-
-  // Patients
-  dischargePatient: (data: { patient_id: string; name: string; department: string; phone?: string; email?: string }) =>
-    apiFetch('/api/patients/discharge', { method: 'POST', body: JSON.stringify(data) }),
 };
+
+export const apiPost = async (path: string, body: any) => {
+  const res = await fetch(`${API}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`POST ${path} failed`);
+  return res.json();
+};
+
+export const apiPatch = async (path: string, body?: any) => {
+  const res = await fetch(`${API}${path}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) throw new Error(`PATCH ${path} failed`);
+  return res.json();
+};
+
+// Patient APIs
+export const getPatients = () => apiGet("/api/patients");
+export const getDischargedPatients = () => apiGet("/api/patients/discharged");
+export const updateBillingStatus = (patientId: string, billingStatus: string) =>
+  apiPatch(`/api/patients/${patientId}/billing`, { billingStatus });
+
+// Feedback APIs
+export const submitFeedback = (data: {
+  patientId: string;
+  patientName: string;
+  department: string;
+  rawText: string;
+}) => apiPost("/api/feedback/submit", data);
+export const getFeedbacks = () => apiGet("/api/feedback/list");
+
+// Ticket APIs
+export const getTickets = (status?: string) =>
+  apiGet(`/api/tickets${status ? `?status=${status}` : ""}`);
+export const updateTicket = (ticketId: string, status: string, resolutionNote?: string) =>
+  apiPatch(`/api/tickets/${ticketId}`, { status, resolutionNote });
+
+// Notification APIs
+export const getNotifications = () => apiGet("/api/notifications");
+export const markNotificationRead = (id: string) =>
+  apiPatch(`/api/notifications/${id}/read`);
+export const markAllRead = () => apiPatch("/api/notifications/read-all");
+
+// Analytics APIs
+export const getSummary = () => apiGet("/api/analytics/summary");
+export const getWeeklyReport = () => apiGet("/api/analytics/weekly");
+
+// Heatmap API
+export const getHeatmap = () => apiGet("/api/heatmap");

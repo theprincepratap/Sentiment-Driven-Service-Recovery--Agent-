@@ -1,62 +1,49 @@
+# routes/patients.py
 from fastapi import APIRouter
+from pydantic import BaseModel
 from datetime import datetime
-from db.mongodb import get_db
-from models.schemas import PatientDischarge
-from services.ws_manager import manager as ws_manager
-import uuid
+from db.database import get_db
+from services.survey_service import send_survey
 
-router = APIRouter()
+router = APIRouter(prefix="/api/patients", tags=["Patients"])
 
+class BillingUpdateRequest(BaseModel):
+    billingStatus: str   # Paid | Discharged
 
-@router.post("/patients/discharge")
-async def discharge_patient(data: PatientDischarge):
+# STEP 1 — when billing status → Paid, auto-trigger survey
+@router.patch("/{patient_id}/billing")
+async def update_billing_status(patient_id: str, body: BillingUpdateRequest):
     db = get_db()
-    discharge_time = datetime.utcnow()
-
-    patient_doc = {
-        "patient_id": data.patient_id,
-        "name": data.name,
-        "department": data.department,
-        "phone": data.phone,
-        "email": data.email,
-        "discharge_date": discharge_time,
-        "survey_sent": True,
-        "created_at": discharge_time
-    }
-
     await db.patients.update_one(
-        {"patient_id": data.patient_id},
-        {"$set": patient_doc},
-        upsert=True
+        {"patientId": patient_id},
+        {"$set": {"billingStatus": body.billingStatus, "updatedAt": datetime.utcnow()}}
     )
 
-    # Broadcast discharge event for live activity feed
-    await ws_manager.broadcast("patient_discharged", {
-        "patient_id": data.patient_id,
-        "name": data.name,
-        "department": data.department,
-        "message": f"Patient {data.name} discharged from {data.department}. Survey sent.",
-        "timestamp": discharge_time.isoformat()
-    })
+    result = {"patientId": patient_id, "billingStatus": body.billingStatus, "surveySent": False}
 
-    return {
-        "status": "discharged",
-        "patient_id": data.patient_id,
-        "survey_sent": True,
-        "discharge_time": discharge_time.isoformat()
-    }
+    # Auto-trigger survey when marked Paid/Discharged
+    if body.billingStatus in ["Paid", "Discharged"]:
+        survey_url = f"http://localhost:3000/survey/{patient_id}"
+        survey_result = await send_survey(patient_id, survey_url)
+        result["surveySent"] = True
+        result["surveyUrl"] = survey_result["surveyUrl"]
 
+    return result
 
-@router.get("/patients")
-async def get_patients(limit: int = 50):
+@router.get("")
+async def get_patients():
     db = get_db()
-    cursor = db.patients.find({}).sort("discharge_date", -1).limit(limit)
-    patients = []
-    async for doc in cursor:
-        doc["_id"] = str(doc["_id"])
-        if isinstance(doc.get("discharge_date"), datetime):
-            doc["discharge_date"] = doc["discharge_date"].isoformat()
-        if isinstance(doc.get("created_at"), datetime):
-            doc["created_at"] = doc["created_at"].isoformat()
-        patients.append(doc)
+    patients = await db.patients.find().to_list(length=100)
+    for p in patients:
+        p["_id"] = str(p["_id"])
+    return patients
+
+# Simulated tool: get_discharged_patients(date)
+@router.get("/discharged")
+async def get_discharged_patients(date: str = None): # type: ignore
+    db = get_db()
+    query = {"billingStatus": {"$in": ["Paid", "Discharged"]}}
+    patients = await db.patients.find(query).to_list(length=100)
+    for p in patients:
+        p["_id"] = str(p["_id"])
     return patients
